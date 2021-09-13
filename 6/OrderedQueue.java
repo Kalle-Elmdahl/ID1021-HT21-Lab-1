@@ -1,6 +1,6 @@
 /**
- * @author Kalle Elmdahl 21/09/07 (updated 21/09/11)
- * This code is an implmentation of a queue abstract data type
+ * @author Kalle Elmdahl 21/09/07 (updated 21/09/13)
+ * This code is an implmentation of an ordered queue
  * The code is for an assignment from the KTH-course ID1020
  * The code is based on examples from https://algs4.cs.princeton.edu/home/
  */
@@ -9,21 +9,21 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
- * A generlized queue with the ability to remove an element with an index
+ * The A queue implmentation where all elements in the queue are sorted in ascending order.
  */
-public class GeneralizedQueue<Item> implements Iterable<Item> {
-    private Node<Item> first;
+public class OrderedQueue implements Iterable<Integer>  {
+    private Node first;
     private int n;
 
-    private static class Node<Item> {
-        private Item item;
-        private Node<Item> next;
+    private static class Node {
+        private Integer item;
+        private Node next;
     }
 
     /**
-     * Initiates the class
+     * initializes the OrderedQueue class
      */
-    public GeneralizedQueue() {
+    public OrderedQueue() {
         first = null;
         n = 0;
     }
@@ -48,30 +48,34 @@ public class GeneralizedQueue<Item> implements Iterable<Item> {
      * Adds one item to the queue.
      * @param item the item added
      */
-    public void enqueue(Item item) {
-        Node<Item> oldFirst = first;
-        first = new Node<Item>();
-        first.item = item;
-        first.next = oldFirst;
+    public void enqueue(Integer item) {
+        Node target = first;
+        Node newNode = new Node();
+        newNode.item = item;
+        if(isEmpty())
+            first = newNode;
+        else if(first.item > item) {
+            newNode.next = first;
+            first = newNode;
+        } else {
+            while(target.next != null && target.next.item < item)
+                target = target.next;
+            
+            newNode.next = target.next;
+            target.next = newNode;
+        }
+        
         n++;
     }
 
     /**
-     * Removes an item from the queue at an index
+     * Removes an item from the queue
      * @return the removed item
      */
-    public Item remove(int target) {
-        if(target < 1 || target > n) throw new IndexOutOfBoundsException("Invalid index");
-        Item item;
-        Node<Item> node = first;
-        if(target == 1) {
-            item = first.item;
-            first = first.next;
-        } else {
-            for(int i = 2; i < target; i++) node = node.next;
-            item = node.next.item;
-            node.next = node.next.next;
-        }
+    public Integer dequeue() {
+        if (isEmpty()) throw new NoSuchElementException("Cant remove from empty list");
+        Integer item = first.item;
+        first = first.next;
         n--;
         return item;
     }
@@ -82,33 +86,32 @@ public class GeneralizedQueue<Item> implements Iterable<Item> {
      */
     public String toString() {
         StringBuilder s = new StringBuilder();
-        Node<Item> node = first;
-
+        Node node = first;
         for(int i = 0; i < n; i++) {
-            s.append("\n[Node " + (i + 1) + ": " + node);
+            s.append("\n[Node " + i + ": " + node);
             s.append("\nValue: " + node.item);
             s.append("\nNext: " + node.next + "],\n");
             node = node.next;
         }
         return s.toString();
-    } 
+    }
 
     /**
      * Get an instance of an iterator class. based on the standardized iterator {@see https://docs.oracle.com/javase/8/docs/api/java/util/Iterator.html}
      * @return the iterator.
      */
-    public Iterator<Item> iterator() {
+    public Iterator<Integer> iterator() {
         return new LinkedIterator(first);  
     }
     
-    private class LinkedIterator implements Iterator<Item> {
-        private Node<Item> current;
+    private class LinkedIterator implements Iterator<Integer> {
+        private Node current;
 
         /**
          * Initializes the iterator
          * @param first first node in the linked list
          */
-        public LinkedIterator(Node<Item> first) {
+        public LinkedIterator(Node first) {
             current = first;
         }
 
@@ -124,9 +127,9 @@ public class GeneralizedQueue<Item> implements Iterable<Item> {
          * Get the next item in the list
          * @return the item
          */
-
-        public Item next() {
-            Item item = current.item;
+        public Integer next() {
+            if (!hasNext()) throw new NoSuchElementException();
+            Integer item = current.item;
             current = current.next; 
             return item;
         }
@@ -137,9 +140,9 @@ public class GeneralizedQueue<Item> implements Iterable<Item> {
      * @param args arguments from program execution
      */
     public static void main(String[] args) {
-        System.out.print("\nEnter a command: \nenqueue - add item to the list \nremove - remove item from the list at index (most recent = 1) \nsize - get number of elements in list\nisEmpty - know if the stack is empty\nquit - exit the program\n");
+        System.out.print("\nEnter a command: \nenqueue - add item to the list \ndequeue - remove item from the list \nsize - get number of elements in list\nisEmpty - know if the stack is empty\nquit - exit the program\n");
         Scanner input = new Scanner(System.in);
-        GeneralizedQueue<Double> testingStack = new GeneralizedQueue<Double>();
+        OrderedQueue testingqueue = new OrderedQueue();
         outerwhile:
         while(true) {
             System.out.print("$ ");
@@ -148,19 +151,18 @@ public class GeneralizedQueue<Item> implements Iterable<Item> {
             switch(cmd) {
                 case "enqueue":
                     System.out.println("What number do you want to add? ");
-                    testingStack.enqueue(input.nextDouble());
+                    testingqueue.enqueue(input.nextInt());
                     break;
-                case "remove":
-                    System.out.println("At what index do you want to remove");
-                    Double returnValue = testingStack.remove(input.nextInt());
+                case "dequeue":
+                    int returnValue = testingqueue.dequeue();
                     System.out.println("Received value: " + returnValue);
                     break;
                 case "size":
-                    int size = testingStack.size();
+                    double size = testingqueue.size();
                     System.out.println("[size]: You received the number: " + size);
                     break;
                     case "isEmpty":
-                    boolean isEmpty = testingStack.isEmpty();
+                    boolean isEmpty = testingqueue.isEmpty();
                     System.out.println("[isEmpty]: You received the result: " + isEmpty);
                     break;
                 case "quit": break outerwhile;
@@ -169,7 +171,7 @@ public class GeneralizedQueue<Item> implements Iterable<Item> {
                     break;
             }
             System.out.println("\n\nThe queue now looks like this:");
-            System.out.println(testingStack);
+            System.out.println(testingqueue);
         }
         input.close();
     }

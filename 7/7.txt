@@ -1,0 +1,3 @@
+The algorithm is selected to get a easy and fast program. It seemed to be the simplest option to use a stack to save parentheses.
+Time complexity t ∈ O(n) because the string is only iterated onve
+Memory complexity m ∈ O(n) becase a most n/2 characters are stored in the stack
